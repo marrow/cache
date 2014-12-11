@@ -92,7 +92,7 @@ setup(
 	include_package_data = True,
 	namespace_packages = ['marrow'],
 	
-	install_requires = [],
+	install_requires = ['mongoengine>=0.8.5'],
 	
 	extras_require = dict(
 			development = tests_require,

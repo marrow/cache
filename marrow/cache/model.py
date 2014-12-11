@@ -17,6 +17,14 @@ class CacheKey(EmbeddedDocument):
 	
 	def __repr__(self):
 		return "CacheKey({0.prefix}, {0.reference}, {0.hash})".format(self)
+	
+	@classmethod
+	def new(cls, prefix, reference, args, kw):
+		hash = sha256()
+		hash.update(unicode(pformat(args)).encode('utf8'))
+		hash.update(unicode(pformat(kw)).encode('utf8'))
+		
+		return cls(prefix=prefix, reference=reference, hash=hash.hexdigest())
 
 
 class Cache(Document):
@@ -86,7 +94,7 @@ class Cache(Document):
 			
 			@wraps(fn)
 			def inner(*args, **kw):
-				key = CacheKey(prefix=pfx, reference=reference, hash=cls.keyfunc(args, kw))
+				key = CacheKey.new(pfx, reference, args, kw)
 				
 				try:
 					return cls.get(key, refresh=generate_expiry if refresh else None)
@@ -147,12 +155,3 @@ class Cache(Document):
 	def enable(target=None):
 		with stack(Document if target is None else target, '__nocache__', False):
 			yield
-	
-	# ### Utility Methods
-	
-	@staticmethod
-	def keyfunc(args, kw):
-		key = sha256()
-		key.update(unicode(pformat(args)).encode('utf8'))
-		key.update(unicode(pformat(kw)).encode('utf8'))
-		return key.hexdigest()
