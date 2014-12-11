@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from marrow.cache.exc import CacheMiss
 from marrow.cache.model import CacheKey, Cache
-from marrow.cache.util import utcnow, timedelta
+from marrow.cache.util import utcnow, timedelta, contextmanager
 
 
 # [But, I came here for an argument! #python -ed]
@@ -31,40 +31,37 @@ def connection(request):
 	Cache.drop_collection()
 
 
-@yield_fixture()
-def new_ck(request):
-	yield CacheKey.new('test', None, tuple(), dict())
+def new_ck():
+	return CacheKey.new('test', None, tuple(), dict())
 
 
-@yield_fixture()
-def new_cv(request):
-	yield Cache(key=next(new_ck(None)), value='value', expires=None)
-
-
-@yield_fixture()
-def saved_cv(request):
-	record = next(new_cv(None))
+@contextmanager
+def saved_cv():
+	record = Cache(key=new_ck(), value='value', expires=None)
 	record.expires = utcnow() + Cache.DEFAULT_DELTA
 	yield record.save()
 	record.delete()
 
 
-@yield_fixture()
-def acfunc(request):
-	@Cache.memoize(prefix='acfunc')
+@contextmanager
+def acfunc(**kw):
+	@Cache.memoize(prefix='acfunc', **kw)
 	def inner():
 		inner.called = True
 		return 27  # [Someone's favourite number. @amcgregor -ed]
 	
 	inner.called = False
 	
-	yield inner
+	try:
+		yield inner
+	except:
+		pass
 	
 	Cache.objects(key__prefix='acfunc').delete()
 
 
 class TestCacheKey(TestCase):
-	ck = next(new_ck(None))
+	ck = new_ck()
 	
 	def test_basic_attribute_behaviour(self):
 		assert self.ck.prefix == 'test'
@@ -79,35 +76,37 @@ class TestCacheKey(TestCase):
 		assert NO_ARGUMENTS in rep
 
 
-class TestCacheGeneral(object):
-	def test_repr(self, new_cv):
-		rep = repr(new_cv)
+class TestCacheGeneral(TestCase):
+	def test_programmers_representation(self):
+		rep = repr(Cache(key=new_ck(), value='value', expires=None))
 		assert 'test' in rep
 		assert 'None' in rep
 		assert NO_ARGUMENTS in rep
 	
-	def test_set(self, new_ck):
-		record = Cache.set(new_ck, 27, utcnow() + Cache.DEFAULT_DELTA)
+	def test_explicit_cache_assignment(self):
+		record = Cache.set(new_ck(), 27, utcnow() + Cache.DEFAULT_DELTA)
 		assert record.pk
 		assert not record._created
 		assert record.value == 27
 	
-	def test_get_good(self, saved_cv):
-		assert Cache.get(saved_cv.key) == 'value'
+	def test_explicit_retrieval_ofS_an_extant_key(self):
+		with saved_cv() as cv:
+			assert Cache.get(cv.key) == 'value'
 	
-	def test_get_missing(self, new_ck):
+	def test_explicit_retrieval_of_a_missing_key(self):
 		try:
-			Cache.get(new_ck)
+			Cache.get(new_ck())
 		except CacheMiss:
 			pass
 		else:
 			assert False, "Failed to raise CacheMiss."
 	
-	def test_get_expired(self, new_cv):
+	def test_retrieval_of_expired_values(self):
 		Cache.drop_collection()
 		
 		# We don't recreate the indexes yet because we want the record to survive long enough to test.
 		
+		new_cv = Cache(key=new_ck(), value='value', expires=None)
 		new_cv.expires = utcnow()
 		new_cv.save()
 		
@@ -120,52 +119,48 @@ class TestCacheGeneral(object):
 		finally:
 			Cache.ensure_indexes()
 	
-	def test_get_refresh(self, saved_cv):
-		Cache.get(saved_cv.key, refresh=lambda: utcnow() + Cache.DEFAULT_DELTA)
-		assert saved_cv.expires < saved_cv.reload().expires
+	def test_refreshing_on_cache_hit(self):
+		with saved_cv() as cv:
+			Cache.get(cv.key, refresh=lambda: utcnow() + Cache.DEFAULT_DELTA)
+			assert cv.expires < cv.reload().expires
 
 
-class TestCacheMemoize(object):
-	def test_defaults(self, acfunc):
-		assert acfunc() == 27
-		assert acfunc.called == True
-		
-		acfunc.called = False
-		assert acfunc() == 27
-		assert acfunc.called == False
-		
-		assert Cache.objects.count() == 1
-		
-		expires = Cache.objects.scalar('expires').first()
-		delta = (expires - utcnow()) + timedelta(seconds=10)  # Fude-factor.
-		
-		assert delta.days == 7
+class TestCacheMemoize(TestCase):
+	def test_validate_default_behaviour(self):
+		with acfunc() as fn:
+			assert fn() == 27
+			assert fn.called == True
+			
+			fn.called = False
+			assert fn() == 27
+			assert fn.called == False
+			
+			assert Cache.objects.count() == 1
+			
+			expires = Cache.objects.scalar('expires').first()
+			delta = (expires - utcnow()) + timedelta(seconds=10)  # Fude-factor.
+			
+			assert delta.days == 7
 	
-	def test_custom_expires(self):
-		@Cache.memoize(prefix='acfunc', minutes=5)
-		def inner(): return 42  # [Meaning of life, stuff. #hhgttg -ed]
+	def test_validate_custom_expiry_delta(self):
+		with acfunc(minutes=5) as inner:
+			assert inner() == 27
+			
+			expires = Cache.objects.scalar('expires').first()
+			delta = (expires - utcnow()) + timedelta(seconds=10)  # Fude-factor.
+			
+			assert (5*60) < delta.seconds < (5.25*60)
 		
-		assert inner() == 42
-		
-		expires = Cache.objects.scalar('expires').first()
-		delta = (expires - utcnow()) + timedelta(seconds=10)  # Fude-factor.
-		
-		assert (5*60) < delta.seconds < (5.25*60)
-		
-		Cache.objects(key__prefix='acfunc').delete()
-	
-	def test_no_populate(self):
-		@Cache.memoize(prefix='acfunc', populate=False)
-		def inner(): return "fnord"  # [You're not authorized to know what this means. #haileris -ed]
-		
-		try:
-			inner()
-		except CacheMiss:
-			pass
-		else:
-			assert False, "Failed to raise CacheMiss."
-		
-		assert Cache.objects.count() == 0
+	def test_ensure__populate_false__does_not_populate(self):
+		with acfunc(populate=False) as inner:
+			try:
+				inner()
+			except CacheMiss:
+				pass
+			else:
+				assert False, "Failed to raise CacheMiss."
+			
+			assert Cache.objects.count() == 0
 
 
 class Example(object):
@@ -185,8 +180,8 @@ class Example(object):
 		return self.sample['somevalue'] * 4
 
 
-class TestCacheMethod(object):
-	def test_sample(self):
+class TestCacheMethod(TestCase):
+	def test_instance_property(self):
 		# [IMPORTANT NOTE WARNING WARNING DANGER WILL ROBINSON YOU FEEL DREAD -ed]
 		#  Default .method() usage without dependent values declared effectively ignores that it might be an instance.
 		#  Ensure you pass arguments to the method to key it on something, or pass in an explicit prefix+reference when
@@ -204,7 +199,7 @@ class TestCacheMethod(object):
 		
 		co.delete()  # Clean up.
 	
-	def test_number(self):
+	def test_dependent_instance_method(self):
 		instance = Example()
 		instance.number = 4
 		assert instance.sample_number() == 8
@@ -216,7 +211,7 @@ class TestCacheMethod(object):
 		
 		Cache.objects.delete()
 	
-	def test_somevalue(self):
+	def test_recursive_dependence(self):
 		instance = Example()
 		assert instance.sample_somevalue() == 108
 		assert Cache.objects.count() == 2
