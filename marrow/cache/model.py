@@ -46,6 +46,11 @@ class Cache(Document):
 	value = DynamicField(db_field='v')
 	expires = DateTimeField(db_field='e', default=lambda: utcnow() + timedelta(weeks=1))
 	
+	# ### Magic Methods
+	
+	def __repr__(self):
+		return 'Cache({1.prefix}, {1.reference}, {1.hash}, {0.expires})'.format(self, self.key)
+	
 	# ### Basic Accessors
 	
 	@classmethod
