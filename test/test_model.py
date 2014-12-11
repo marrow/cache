@@ -2,8 +2,9 @@
 
 from pytest import yield_fixture
 
-from marrow.cache.model import *
-from marrow.cache.util import contextmanager, utcnow
+from marrow.cache.exc import CacheMiss
+from marrow.cache.model import CacheKey, Cache
+from marrow.cache.util import utcnow, timedelta
 
 
 # [But, I came here for an argument! #python -ed]

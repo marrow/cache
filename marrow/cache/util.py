@@ -36,29 +36,16 @@ utcnow = datetime.utcnow
 def resolve(obj):
 	finalize = lambda r: getmodule(obj).__name__ + ':' + r
 	
-	def search():
-		space = getmodule(obj).__dict__
-		for key in space:
-			if key.startswith('_') or not isclass(space[key]) or obj.__name__ not in space[key].__dict__:
-				continue
-			
-			if space[key].__dict__[obj.__name__] is not obj:
-				continue
-				
-			return finalize(key + '.' + obj.__name__)
-		
-		raise TypeError("Can't determine canonical name of: " + repr(obj))
-	
 	try:
 		return finalize(obj.__qualname__)
 	except AttributeError:
 		pass
 	
-	if isfunction(obj) and not ismethod(obj):
+	if isfunction(obj) and not ismethod(obj):  # pragma: no cover
 		if getmodule(obj).__dict__.get(obj.__name__, None):
 			return finalize(obj.__name__)
 		
-		return search()
+		raise TypeError("Can't determine canonical name of: " + repr(obj))
 	
 	if not isclass(obj) and hasattr(obj, '__class__') and not hasattr(obj, 'im_class'):
 		obj = obj.__class__
@@ -77,8 +64,6 @@ def resolve(obj):
 			return finalize(obj.im_self.__class__.__name__ + '.' + obj.__name__)
 		
 		return finalize(obj.im_class.__name__ + '.' + obj.__name__)
-		
-		return search()
 
 
 def fetch(obj, reference, default=None):

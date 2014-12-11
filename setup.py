@@ -54,7 +54,7 @@ class PyTest(TestCommand):
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-tests_require = ['pytest', 'pytest-cov']
+tests_require = ['pytest', 'pytest-cov', 'pytest-flakes', 'pytest-cagoule']
 
 setup(
 	name = "marrow.cache",

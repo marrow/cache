@@ -25,3 +25,5 @@ pip-log.txt
 
 # Mac
 .DS_Store
+.cache/
+.cagoule.db
