@@ -218,6 +218,6 @@ class TestCacheMethod(object):
 		
 		instance.example = dict(somevalue=42)
 		assert instance.sample_somevalue() == 108
-		assert Cache.objects.count() == 3
+		assert Cache.objects.count() == 2
 		
 		Cache.objects.delete()

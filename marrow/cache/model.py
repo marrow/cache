@@ -79,7 +79,6 @@ class Cache(Document):
 		""""""
 		
 		# TODO: Pipe out to SON and back to ensure consistent return types.
-		
 		return cls(pk=criteria, value=value, expires=expires).save(force_insert=True, write_concern={'w': 0})
 	
 	# ### Decorators
@@ -95,7 +94,10 @@ class Cache(Document):
 			return (expires() + cls.DEFAULT_DELTA) if cls.DEFAULT_DELTA else expires()
 		
 		def memoize_decorator(fn):
-			pfx = resolve(fn) if prefix is None else prefix
+			if prefix is None:
+				pfx = resolve(fn)
+			else:
+				pfx = prefix
 			
 			@wraps(fn)
 			def memoize_inner(*args, **kw):
@@ -121,10 +123,13 @@ class Cache(Document):
 		""""""
 		
 		def decorator(fn):
+			pfx = innerkwargs.pop('prefix', None)
+			
 			@wraps(fn)
 			def method_inner(self, *args, **kw):
-				prefix = innerkwargs.pop('prefix', None)
-				if not prefix: prefix = resolve(fn)
+				prefix = pfx
+				if not prefix:
+					prefix = resolve(fn)
 				
 				if 'reference' not in innerkwargs and isinstance(self, Document):
 					veto = getattr(self, '__nocache__', False)
