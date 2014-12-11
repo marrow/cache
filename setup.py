@@ -20,7 +20,7 @@ if not hasattr(Mine.canary, 'im_class') and not hasattr(Mine.canary, '__qualname
 	print(" WARNING: You are executing marrow.schema under a Python version that supports", file=sys.stderr)
 	print(" neither im_class nor __qualname__ on class methods.  You will be unable to", file=sys.stderr)
 	print(" use automatic prefix detection on these.", file=sys.stderr)
-	print(" See: https://github.com/marrow/schema/#21-requirements")
+	print(" See: https://github.com/marrow/cache/#21-requirements")
 	print("*" * 79, file=sys.stderr)
 
 
