@@ -143,7 +143,10 @@ class Cache(Document):
 				# It prefixes the expected arglist with the dependent values.
 				return xyzzy(*chain((fetch(self, i) for i in attributes), args))
 			
-			return inner
+			# TODO: inner.cache QuerySet descriptor
+			method_inner.wraps = ref(fn)
+			
+			return method_inner
 		
 		return decorator
 	
