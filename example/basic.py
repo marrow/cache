@@ -27,11 +27,12 @@ Example output of ``time python basic.py``::
 
 from __future__ import unicode_literals, print_function
 
-import sys
 from timeit import main as timeit
 from mongoengine import connect
 
 from marrow.cache import Cache
+
+flush = __import__('sys').stdout.flush
 
 
 @Cache.memoize(minutes=5)
@@ -59,18 +60,15 @@ if __name__ == '__main__':
 	Cache.ensure_indexes()
 	
 	# First, the unoptimized approach.
-	print("Cache Bypass: ", end='')
-	sys.stdout.flush()
+	print("Cache Bypass: ", end=''); flush()
 	timeit(('-s', 'from __main__ import fibonacci', 'fibonacci.wraps()(50)'))
 	
 	# Now, what happens when we use the cache?
-	print("Cached: ", end='')
-	sys.stdout.flush()
+	print("Cached: ", end=''); flush()
 	timeit(('-s', 'from __main__ import fibonacci', 'fibonacci(50)'))
 	
 	# Lastly, what happens when we use the cache and allow it to update itself?
-	print("Cached w/ Refresh: ", end='')
-	sys.stdout.flush()
+	print("Cached w/ Refresh: ", end=''); flush()
 	timeit(('-s', 'from __main__ import fib_refresh', 'fib_refresh(50)'))
 	
 	print("The 50th fibonacci number is:", fibonacci(50), "or", fibonacci.wraps()(50))
