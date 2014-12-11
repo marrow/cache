@@ -158,3 +158,36 @@ class TestCacheMemoize(object):
 			pass
 		else:
 			assert False, "Failed to raise CacheMiss."
+		
+		assert Cache.objects.count() == 0
+
+
+class TestCacheMethod(object):
+	@property
+	@Cache.method()
+	def sample(self):
+		return dict(somevalue=27)
+	
+	@Cache.method('number')
+	def sample_number(self):
+		return self.number * 2
+	
+	@Cache.method('sample.somevalue')
+	def sample_somevalue(self):
+		return self.sample.somevalue * 4
+	
+	def test_sample(self):
+		# Default .method() usage without dependent values declared effectively ignores that it might be an instance.
+		# Ensure you pass arguments to the method to key it on something, or pass in an explicit prefix+reference when
+		# used as a closure.
+		
+		assert self.sample() == dict(somevalue=27)
+		assert Cache.objects.count() == 1
+		
+		co = Cache.objects.first()
+		
+		assert co.key.hash == NO_ARGUMENTS
+		assert co.key.prefix == 'test.test_model:TestCacheMethod.sample'
+		
+		co.delete()  # Clean up.
+	
