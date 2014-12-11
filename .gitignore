@@ -27,3 +27,4 @@ pip-log.txt
 .DS_Store
 .cache/
 .cagoule.db
+htmlcov/
