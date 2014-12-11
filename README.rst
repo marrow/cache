@@ -221,27 +221,27 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 
 .. |masterstatus| image:: http://img.shields.io/travis/marrow/cache/master.svg?style=flat
-    :target: https://travis-ci.org/marrow/marrow.schema
+    :target: https://travis-ci.org/marrow/cache
     :alt: Release Build Status
 
 .. |developstatus| image:: http://img.shields.io/travis/marrow/cache/develop.svg?style=flat
-    :target: https://travis-ci.org/marrow/marrow.schema
+    :target: https://travis-ci.org/marrow/cache
     :alt: Development Build Status
 
 .. |latestversion| image:: http://img.shields.io/pypi/v/marrow.cache.svg?style=flat
-    :target: https://pypi.python.org/pypi/marrow.schema
+    :target: https://pypi.python.org/pypi/cache
     :alt: Latest Version
 
 .. |downloads| image:: http://img.shields.io/pypi/dw/marrow.cache.svg?style=flat
-    :target: https://pypi.python.org/pypi/marrow.schema
+    :target: https://pypi.python.org/pypi/cache
     :alt: Downloads per Week
 
 .. |mastercover| image:: http://img.shields.io/coveralls/marrow/cache/master.svg?style=flat
-    :target: https://travis-ci.org/marrow/marrow.schema
+    :target: https://travis-ci.org/marrow/cache
     :alt: Release Test Coverage
 
 .. |developcover| image:: http://img.shields.io/coveralls/marrow/cache/develop.svg?style=flat
-    :target: https://travis-ci.org/marrow/marrow.schema
+    :target: https://travis-ci.org/marrow/cache
     :alt: Development Test Coverage
 
 .. |issuecount| image:: http://img.shields.io/github/issues/marrow/cache.svg?style=flat
