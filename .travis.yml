@@ -19,6 +19,11 @@ notifications:
       - 'irc.freenode.org#webcore'
     use_notice: true
     skip_join: true
+    on_success: change
+    on_failure: always
+    template:
+      - "%{repository_slug}:%{branch}@%{commit} ${message}"
+      - "Duration: %{duration} - Details: %{build_url}"
 
 after_success:
   - coveralls
