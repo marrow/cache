@@ -164,9 +164,12 @@ class TestCacheMemoize(object):
 
 
 class Example(object):
+	example = dict(somevalue=27)
+	
+	@property
 	@Cache.method(prefix='Example.sample')
 	def sample(self):
-		return dict(somevalue=27)
+		return self.example
 	
 	@Cache.method('number', prefix='Example.sample_number')
 	def sample_number(self):
@@ -174,7 +177,7 @@ class Example(object):
 	
 	@Cache.method('sample.somevalue', prefix='Example.sample_somevalue')
 	def sample_somevalue(self):
-		return self.sample.somevalue * 4
+		return self.sample['somevalue'] * 4
 
 
 class TestCacheMethod(object):
@@ -187,7 +190,7 @@ class TestCacheMethod(object):
 		
 		instance = Example()
 		
-		assert instance.sample() == dict(somevalue=27)
+		assert instance.sample == dict(somevalue=27)
 		assert Cache.objects.count() == 1
 		
 		co = Cache.objects.first()
@@ -195,3 +198,26 @@ class TestCacheMethod(object):
 		assert co.key.hash == NO_ARGUMENTS
 		
 		co.delete()  # Clean up.
+	
+	def test_number(self):
+		instance = Example()
+		instance.number = 4
+		assert instance.sample_number() == 8
+		assert Cache.objects.count() == 1
+		
+		instance.number = 8
+		assert instance.sample_number() == 16
+		assert Cache.objects.count() == 2
+		
+		Cache.objects.delete()
+	
+	def test_somevalue(self):
+		instance = Example()
+		assert instance.sample_somevalue() == 108
+		assert Cache.objects.count() == 2
+		
+		instance.example = dict(somevalue=42)
+		assert instance.sample_somevalue() == 108
+		assert Cache.objects.count() == 3
+		
+		Cache.objects.delete()

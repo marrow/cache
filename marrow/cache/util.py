@@ -129,7 +129,7 @@ def fetch(obj, reference, default=None):
 	
 	while separator:
 		name, separator, remainder = remainder.partition('.')
-		numeric = name.lstrip('-').isnumeric()
+		numeric = name.lstrip('-').isdigit()
 		
 		try:
 			if numeric: raise AttributeError()
@@ -138,10 +138,7 @@ def fetch(obj, reference, default=None):
 			try:
 				value = value[int(name) if numeric else name]
 			except (KeyError, TypeError):
-				if default:
-					return default
-				
-				raise
+				return default
 	
 	return value
 

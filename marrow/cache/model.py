@@ -7,7 +7,7 @@ from mongoengine import StringField, DateTimeField, GenericReferenceField, Dynam
 
 from .exc import CacheMiss
 from .compat import py3, unicode, iteritems
-from .util import sha256, timedelta, resolve, wraps, ref, utcnow, chain, isclass, deque, contextmanager, stack, pformat
+from .util import sha256, timedelta, resolve, wraps, ref, utcnow, chain, isclass, deque, contextmanager, stack, pformat, fetch
 
 
 class CacheKey(EmbeddedDocument):
@@ -141,7 +141,7 @@ class Cache(Document):
 				
 				# This is excessively ugly, but works.
 				# It prefixes the expected arglist with the dependent values.
-				return xyzzy(*chain((fetch(self, i) for i in attributes), args))
+				return xyzzy(*(tuple(fetch(self, i) for i in attributes) + args))
 			
 			# TODO: inner.cache QuerySet descriptor
 			method_inner.wraps = ref(fn)
