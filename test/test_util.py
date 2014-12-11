@@ -67,7 +67,7 @@ class TestResolver(TestCase):
 		else:
 			assert False, "Failed to raise TypeError."
 	
-	def test__resolve__failure_scenarios(self):
+	def test_acceptable_failure_scenarios(self):
 		if not bool(os.environ.get('CANARY', False)):
 			for i in (Example.instance, Example.classmethod):
 				yield self.object_fails, i
