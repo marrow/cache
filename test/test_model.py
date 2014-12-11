@@ -178,9 +178,11 @@ class TestCacheMethod(object):
 		return self.sample.somevalue * 4
 	
 	def test_sample(self):
-		# Default .method() usage without dependent values declared effectively ignores that it might be an instance.
-		# Ensure you pass arguments to the method to key it on something, or pass in an explicit prefix+reference when
-		# used as a closure.
+		# [IMPORTANT NOTE WARNING WARNING DANGER WILL ROBINSON YOU FEEL DREAD -ed]
+		#  Default .method() usage without dependent values declared effectively ignores that it might be an instance.
+		#  Ensure you pass arguments to the method to key it on something, or pass in an explicit prefix+reference when
+		#  used as a closure.
+		# TODO: #1 Yes, this is buried in the tests for now. @amcgregor #yolo -ed
 		
 		assert self.sample() == dict(somevalue=27)
 		assert Cache.objects.count() == 1
