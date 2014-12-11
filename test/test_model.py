@@ -163,20 +163,21 @@ class TestCacheMemoize(object):
 		assert Cache.objects.count() == 0
 
 
-class TestCacheMethod(object):
-	@property
-	@Cache.method()
+class Example(object):
+	@Cache.method(prefix='Example.sample')
 	def sample(self):
 		return dict(somevalue=27)
 	
-	@Cache.method('number')
+	@Cache.method('number', prefix='Example.sample_number')
 	def sample_number(self):
 		return self.number * 2
 	
-	@Cache.method('sample.somevalue')
+	@Cache.method('sample.somevalue', prefix='Example.sample_somevalue')
 	def sample_somevalue(self):
 		return self.sample.somevalue * 4
-	
+
+
+class TestCacheMethod(object):
 	def test_sample(self):
 		# [IMPORTANT NOTE WARNING WARNING DANGER WILL ROBINSON YOU FEEL DREAD -ed]
 		#  Default .method() usage without dependent values declared effectively ignores that it might be an instance.
@@ -184,13 +185,13 @@ class TestCacheMethod(object):
 		#  used as a closure.
 		# TODO: #1 Yes, this is buried in the tests for now. @amcgregor #yolo -ed
 		
-		assert self.sample() == dict(somevalue=27)
+		instance = Example()
+		
+		assert instance.sample() == dict(somevalue=27)
 		assert Cache.objects.count() == 1
 		
 		co = Cache.objects.first()
 		
 		assert co.key.hash == NO_ARGUMENTS
-		assert co.key.prefix == 'test.test_model:TestCacheMethod.sample'
 		
 		co.delete()  # Clean up.
-	

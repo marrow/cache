@@ -49,7 +49,7 @@ class Cache(Document):
 	# ### Magic Methods
 	
 	def __repr__(self):
-		return 'Cache({1.prefix}, {1.reference}, {1.hash}, {0.expires})'.format(self, self.key)
+		return 'Cache({1.prefix}, {1.reference}, {1.hash}, {0.expires})'.format(self, self.key if self.key else CacheKey())
 	
 	# ### Basic Accessors
 	
@@ -121,11 +121,11 @@ class Cache(Document):
 		""""""
 		
 		def decorator(fn):
-			prefix = innerkwargs.pop('prefix', None)
-			if not prefix: prefix = resolve(fn)
-			
 			@wraps(fn)
 			def method_inner(self, *args, **kw):
+				prefix = innerkwargs.pop('prefix', None)
+				if not prefix: prefix = resolve(fn)
+				
 				if 'reference' not in innerkwargs and isinstance(self, Document):
 					veto = getattr(self, '__nocache__', False)
 					
