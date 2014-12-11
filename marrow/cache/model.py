@@ -88,33 +88,33 @@ class Cache(Document):
 	def memoize(cls, prefix=None, reference=None, expires=utcnow, weeks=0, days=0, hours=0, minutes=0, seconds=0, refresh=False, populate=True):
 		""""""
 		
-		def generate_expiry():
+		def memoize_generate_expiry():
 			if weeks or days or hours or minutes or seconds:
 				return expires() + timedelta(weeks=weeks, days=days, hours=hours, minutes=minutes, seconds=seconds)
 			
 			return (expires() + cls.DEFAULT_DELTA) if cls.DEFAULT_DELTA else expires()
 		
-		def decorator(fn):
+		def memoize_decorator(fn):
 			pfx = resolve(fn) if prefix is None else prefix
 			
 			@wraps(fn)
-			def inner(*args, **kw):
+			def memoize_inner(*args, **kw):
 				key = CacheKey.new(pfx, reference, args, kw)
 				
 				try:
-					return cls.get(key, refresh=generate_expiry if refresh else None)
+					return cls.get(key, refresh=memoize_generate_expiry if refresh else None)
 				except CacheMiss:
 					if not populate:
 						raise
 				
-				return cls.set(key, fn(*args, **kw), generate_expiry()).value
+				return cls.set(key, fn(*args, **kw), memoize_generate_expiry()).value
 			
 			# TODO: inner.cache QuerySet descriptor
-			inner.wraps = ref(fn)  # Don't want circular references, now.
+			memoize_inner.wraps = ref(fn)  # Don't want circular references, now.
 			
-			return inner
+			return memoize_inner
 		
-		return decorator
+		return memoize_decorator
 	
 	@classmethod
 	def method(cls, *attributes, **innerkwargs):
@@ -125,7 +125,7 @@ class Cache(Document):
 			if not prefix: prefix = resolve(fn)
 			
 			@wraps(fn)
-			def inner(self, *args, **kw):
+			def method_inner(self, *args, **kw):
 				if 'reference' not in innerkwargs and isinstance(self, Document):
 					veto = getattr(self, '__nocache__', False)
 					
