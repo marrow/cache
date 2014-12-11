@@ -6,8 +6,8 @@ from mongoengine import Document, EmbeddedDocument
 from mongoengine import StringField, DateTimeField, GenericReferenceField, DynamicField, EmbeddedDocumentField
 
 from .exc import CacheMiss
-from .compat import py3, iteritems
-from .util import sha256, timedelta, resolve, wraps, proxy, utcnow, chain, isclass, deque, contextmanager, stack
+from .compat import py3, unicode, iteritems
+from .util import sha256, timedelta, resolve, wraps, ref, utcnow, chain, isclass, deque, contextmanager, stack, pformat
 
 
 class CacheKey(EmbeddedDocument):
@@ -47,7 +47,7 @@ class Cache(Document):
 		# TODO: Upserts, baby!  Benchmark first, of course.
 		# TODO: deque enable/disable context manager glue
 		
-		result = model.objects(pk=criteria).scalar('expires', 'value').first()
+		result = cls.objects(pk=criteria).scalar('expires', 'value').first()
 		
 		if not result:
 			raise CacheMiss()
@@ -81,13 +81,12 @@ class Cache(Document):
 			
 			return (expires() + cls.DEFAULT_DELTA) if cls.DEFAULT_DELTA else expires()
 		
-		if prefix is None:
-			prefix = resolve(fn)
-		
 		def decorator(fn):
+			pfx = resolve(fn) if prefix is None else prefix
+			
 			@wraps(fn)
 			def inner(*args, **kw):
-				key = CacheKey(prefix, reference, cls.keyfunc(args, kw))
+				key = CacheKey(prefix=pfx, reference=reference, hash=cls.keyfunc(args, kw))
 				
 				try:
 					return cls.get(key, refresh=generate_expiry if refresh else None)
@@ -98,7 +97,7 @@ class Cache(Document):
 				return cls.set(key, fn(*args, **kw), generate_expiry()).value
 			
 			# TODO: inner.cache QuerySet descriptor
-			inner.wraps = proxy(fn)  # Don't want circular references, now.
+			inner.wraps = ref(fn)  # Don't want circular references, now.
 			
 			return inner
 		
@@ -154,6 +153,6 @@ class Cache(Document):
 	@staticmethod
 	def keyfunc(args, kw):
 		key = sha256()
-		key.update(pformat(args))
-		key.update(pformat(kw))
+		key.update(unicode(pformat(args)).encode('utf8'))
+		key.update(unicode(pformat(kw)).encode('utf8'))
 		return key.hexdigest()

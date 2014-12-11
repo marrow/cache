@@ -5,7 +5,7 @@
 # ## Imports
 
 from warnings import warn
-from weakref import proxy
+from weakref import ref
 from functools import wraps
 from itertools import chain
 from inspect import getmodule, isclass
@@ -13,6 +13,7 @@ from collections import deque
 from contextlib import contextmanager
 from hashlib import sha256
 from datetime import datetime, timedelta
+from pprint import pformat
 
 
 # ## Weird Aliases
@@ -47,8 +48,8 @@ def resolve(obj):
 		
 		if hasattr(obj, 'im_class'):
 			q = obj.im_class.__name__ + '.' + q
-			
-			return getmodule(obj).__name__ + ':' + q
+	
+	return getmodule(obj).__name__ + ':' + q
 
 
 def fetch(obj, reference, default=None):
