@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 from pytest import yield_fixture
+from unittest import TestCase
 
 from marrow.cache.exc import CacheMiss
 from marrow.cache.model import CacheKey, Cache
@@ -62,14 +63,17 @@ def acfunc(request):
 	Cache.objects(key__prefix='acfunc').delete()
 
 
-class TestCacheKey(object):
-	def test_new(self, new_ck):
-		assert new_ck.prefix == 'test'
-		assert new_ck.reference is None
-		assert new_ck.hash == NO_ARGUMENTS
+class TestCacheKey(TestCase):
+	ck = next(new_ck(None))
 	
-	def test_repr(self, new_ck):
-		rep = repr(new_ck)
+	def test_basic_attribute_behaviour(self):
+		assert self.ck.prefix == 'test'
+		assert self.ck.reference is None
+		assert self.ck.hash == NO_ARGUMENTS
+	
+	def test_programmers_representation(self):
+		rep = repr(self.ck)
+		
 		assert 'test' in rep
 		assert 'None' in rep
 		assert NO_ARGUMENTS in rep
