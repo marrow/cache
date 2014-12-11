@@ -6,6 +6,7 @@ from marrow.cache.model import *
 from marrow.cache.util import contextmanager, utcnow
 
 
+# [But, I came here for an argument! #python -ed]
 NO_ARGUMENTS = '4f888e090430fea81ed3e2f31a2824445a98e2877f0048502d57d8ead350cb5b'
 
 
@@ -51,7 +52,7 @@ def acfunc(request):
 	@Cache.memoize(prefix='acfunc')
 	def inner():
 		inner.called = True
-		return 27
+		return 27  # [Someone's favourite number. @amcgregor -ed]
 	
 	inner.called = False
 	
@@ -137,7 +138,7 @@ class TestCacheMemoize(object):
 	
 	def test_custom_expires(self):
 		@Cache.memoize(prefix='acfunc', minutes=5)
-		def inner(): return 42
+		def inner(): return 42  # [Meaning of life, stuff. #hhgttg -ed]
 		
 		assert inner() == 42
 		
@@ -150,7 +151,7 @@ class TestCacheMemoize(object):
 	
 	def test_no_populate(self):
 		@Cache.memoize(prefix='acfunc', populate=False)
-		def inner(): return "fnord"
+		def inner(): return "fnord"  # [You're not authorized to know what this means. #haileris -ed]
 		
 		try:
 			inner()
