@@ -34,6 +34,9 @@ class Example(object):
 
 
 class TestResolver(TestCase):
+	class Nested(object):
+		pass
+	
 	def test__resolve__of_a_module_level_function(self):
 		assert resolve(bare) == 'test.test_util:bare'
 	
@@ -49,27 +52,54 @@ class TestResolver(TestCase):
 		assert resolve(Example().instance) == 'test.test_util:Example.instance'
 	
 	@canaried
-	def test__resolve__of_a_class_method(self):
+	def test__resolve__of_a_module_level_class_method(self):
 		assert resolve(Example.classmethod) == 'test.test_util:Example.classmethod'
 		assert resolve(Example().classmethod) == 'test.test_util:Example.classmethod'
 	
 	@requires_qualname
-	def test__resolve__of_a_static_method(self):
+	def test__resolve__of_a_module_level_static_method(self):
 		assert resolve(Example.staticmethod) == 'test.test_util:Example.staticmethod'
 		assert resolve(Example().staticmethod) == 'test.test_util:Example.staticmethod'
 	
-	def object_fails(self, obj):
-		try:
-			assert resolve(obj)
-		except TypeError:
-			pass
-		else:
-			assert False, "Failed to raise TypeError."
+	@requires_qualname
+	def test__resolve__of_a_nested_class(self):
+		assert resolve(self.Nested) == 'test.test_util:TestResolver.Nested'
 	
-	def test_acceptable_failure_scenarios(self):
-		if not bool(os.environ.get('CANARY', False)):
-			for i in (Example.instance, Example.classmethod):
-				yield self.object_fails, i
+	@requires_qualname
+	def test__resolve__of_a_closure(self):
+		def closure():
+			pass
 		
-		if sys.version_info >= (3, 3):
-			yield self.object_fails, Example.staticmethod
+		assert resolve(closure) == 'test.test_util:TestResolver.test__resolve__of_a_closure.<locals>.closure'
+
+
+def object_fails(obj):
+	try:
+		assert resolve(obj)
+	except TypeError:
+		pass
+	else:
+		assert False, "Failed to raise TypeError."
+
+def test_acceptable_failure_scenarios():
+	def closure():
+		pass
+	
+	def Closure(object):
+		pass
+	
+	if not bool(os.environ.get('CANARY', False)):
+		yield object_fails, Example.instance
+		yield object_fails, Example.classmethod
+	
+	if sys.version_info >= (3, 3):
+		yield object_fails, Example.staticmethod
+	
+	else:
+		yield object_fails, TestResolver.Nested
+		yield object_fails, closure
+		yield object_fails, Closure
+		yield object_fails, Example.Pandora
+		
+		1/0
+		assert not resolve(Example.Pandora)
