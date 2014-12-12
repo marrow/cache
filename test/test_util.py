@@ -33,7 +33,6 @@ class Example(object):
 		pass
 
 
-
 class TestResolver(TestCase):
 	def test__resolve__of_a_module_level_function(self):
 		assert resolve(bare) == 'test.test_util:bare'

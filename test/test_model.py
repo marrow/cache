@@ -60,6 +60,11 @@ def acfunc(**kw):
 	Cache.objects(key__prefix='acfunc').delete()
 
 
+@Cache.memoize()
+def bare():
+	return "Hello world!"
+
+
 class TestCacheKey(TestCase):
 	ck = new_ck()
 	
@@ -126,6 +131,20 @@ class TestCacheGeneral(TestCase):
 
 
 class TestCacheMemoize(TestCase):
+	def test_automatic_prefixes(self):
+		assert Cache.objects.count() == 0
+		
+		assert bare() == "Hello world!"
+		
+		assert Cache.objects.count() == 1
+		
+		co = Cache.objects.first()
+		
+		assert co.key.prefix == 'test.test_model:bare'
+		assert co.value == "Hello world!"
+		
+		Cache.objects.delete()
+	
 	def test_validate_default_behaviour(self):
 		with acfunc() as fn:
 			assert fn() == 27
