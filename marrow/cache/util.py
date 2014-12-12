@@ -55,7 +55,7 @@ def resolve(obj):
 	except AttributeError:
 		pass
 	
-	if isfunction(obj) and not ismethod(obj): # pragma: py2
+	if isfunction(obj) and not ismethod(obj):  # pragma: no cover - tested under py2
 		return finalize(obj.__name__)
 		
 	if not isclass(obj) and hasattr(obj, '__class__') and not hasattr(obj, 'im_class'):
@@ -67,7 +67,7 @@ def resolve(obj):
 		
 		return finalize(obj.__name__)
 	
-	if hasattr(obj, 'im_self') and obj.im_class:
+	if hasattr(obj, 'im_self') and obj.im_class:  # pragma: no cover - tested under py2, irrelevant on py3
 		if obj.im_self:
 			if isclass(obj.im_self):
 				return finalize(obj.im_self.__name__ + '.' + obj.__name__)
