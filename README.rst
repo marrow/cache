@@ -25,11 +25,6 @@ methods.  It is fully tested and highly focused to this task.  Primary features 
 * Intelligently cache the result of Document method calls, with the cached value bound to the primary key of the
   document; optionally also keying on other fields.
 
-* An alternate ReferenceField and GenericReferenceField implementation that allows for caching of specific foreign
-  fields, saving on additional lookups for single values.
-
-* Class decorators for Documents to register them for automatic refreshing or expiry of cached values.
-
 A TTL index in MongoDB will automatically cull expired values once a minute.  If overwhelmed, it won't be able to do
 them all in one pass.  Incremental garbage collection is automatically accounted for by validating the expiry time
 on any potential cache hit.  If invalid, the record will be explicitly deleted and a new one generated.
