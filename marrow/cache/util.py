@@ -25,8 +25,7 @@ from marrow.package.loader import traverse as fetch
 utcnow = datetime.utcnow
 
 
-
-# ### Context Managers
+# ## Context Managers
 
 @contextmanager
 def stack(target, attribute, value):
@@ -45,4 +44,3 @@ def stack(target, attribute, value):
 	
 	if not container:
 		delattr(target, attribute)
-
