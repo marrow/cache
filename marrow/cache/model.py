@@ -26,9 +26,6 @@ class CacheKey(EmbeddedDocument):
 	def __repr__(self):
 		return "CacheKey({0.prefix}, {0.reference}, {0.hash})".format(self)
 	
-	def __str__(self):
-		return repr(self)
-	
 	@classmethod
 	def new(cls, prefix, reference, args, kw):
 		hash = sha256()
@@ -65,7 +62,8 @@ class CacheMark(object):
 				if not args[0].pk or args[0]._created or (veto and veto[-1]):
 					return fn(*args, **kw)  # Can't safely cache.
 				
-				reference = self.pk if reference is True else reference
+				reference = args[0] if reference is True else reference
+				
 			
 			_args = self.processor(args, kw) if self.processor else (args, kw)
 			key = CacheKey.new(prefix, None if reference is True or reference is False else reference, *_args)

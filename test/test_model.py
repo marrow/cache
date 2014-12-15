@@ -3,9 +3,13 @@
 import pytest
 from unittest import TestCase
 
+from bson import ObjectId
+from mongoengine import connect, Document, StringField, ObjectIdField
+
 from marrow.cache.exc import CacheMiss
 from marrow.cache.model import CacheKey, Cache
 from marrow.cache.util import utcnow, timedelta, contextmanager
+
 
 
 # [But, I came here for an argument! #python -ed]
@@ -18,8 +22,6 @@ def connection(request):
 	
 	It's also nice to clean up after yourself.
 	"""
-	
-	from mongoengine import connect
 	
 	connect('test')
 	
@@ -241,3 +243,59 @@ class TestCacheMethod(TestCase):
 		assert Cache.objects.count() == 2
 		
 		Cache.objects.delete()
+
+
+class ExampleDocument(Document):
+	_id = ObjectIdField(primary_key=True, default=ObjectId)
+	name = StringField()
+	
+	@Cache.method('name')
+	def hello(self):
+		return "Hello " + self.name + "!"
+
+
+class TestDocumentMethodCache(TestCase):
+	def test_cache_veto_simple(self):
+		Cache.objects.delete()
+		ExampleDocument.objects.delete()
+		instance = ExampleDocument(name="Bob Dole").save()
+		
+		with Cache.disable():
+			assert instance.hello() == "Hello Bob Dole!"
+		
+		assert Cache.objects.count() == 0
+		
+		with Cache.disable(ExampleDocument):
+			assert instance.hello() == "Hello Bob Dole!"
+		
+		assert Cache.objects.count() == 0
+		
+		with Cache.disable(instance):
+			assert instance.hello() == "Hello Bob Dole!"
+		
+		assert Cache.objects.count() == 0
+	
+	def test_cache_veto_targeted(self):
+		Cache.objects.delete()
+		ExampleDocument.objects.delete()
+		instance = ExampleDocument(name="Bob Dole").save()
+		
+		with Cache.disable(ExampleDocument):
+			assert instance.hello() == "Hello Bob Dole!"
+		
+		assert Cache.objects.count() == 0
+		
+		instance.delete()
+	
+	def test_cache_veto_reallow(self):
+		Cache.objects.delete()
+		ExampleDocument.objects.delete()
+		instance = ExampleDocument(name="Bob Dole").save()
+		
+		with Cache.disable():
+			with Cache.enable(ExampleDocument):
+				assert instance.hello() == "Hello Bob Dole!"
+		
+		assert Cache.objects.count() == 1
+		
+		
