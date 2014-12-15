@@ -87,7 +87,7 @@ class CacheMark(object):
 				
 			return self.manager.set(key, fn(*args, **kw), self.expiry()).value
 		
-		cache_mark_inner.wraps = fn
+		cache_mark_inner.__func__ = fn
 		
 		return cache_mark_inner
 

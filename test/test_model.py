@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-from pytest import yield_fixture
+import pytest
 from unittest import TestCase
 
 from marrow.cache.exc import CacheMiss
@@ -12,7 +12,7 @@ from marrow.cache.util import utcnow, timedelta, contextmanager
 NO_ARGUMENTS = '4f888e090430fea81ed3e2f31a2824445a98e2877f0048502d57d8ead350cb5b'
 
 
-@yield_fixture(scope="module", autouse=True)
+@pytest.yield_fixture(scope="module", autouse=True)
 def connection(request):
 	"""These are live tests, so we need an active connection.
 	
@@ -131,6 +131,7 @@ class TestCacheGeneral(TestCase):
 
 
 class TestCacheMemoize(TestCase):
+	@pytest.mark.xfail(not hasattr(bare, '__qualname__'), reason="Requires __qualname__ support in Python 3.3+")
 	def test_automatic_prefixes(self):
 		assert Cache.objects.count() == 0
 		
