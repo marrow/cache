@@ -249,7 +249,7 @@ class ExampleDocument(Document):
 	_id = ObjectIdField(primary_key=True, default=ObjectId)
 	name = StringField()
 	
-	@Cache.method('name')
+	@Cache.method('name', prefix='ExampleDocument.hello')
 	def hello(self):
 		return "Hello " + self.name + "!"
 
@@ -297,5 +297,3 @@ class TestDocumentMethodCache(TestCase):
 				assert instance.hello() == "Hello Bob Dole!"
 		
 		assert Cache.objects.count() == 1
-		
-		
