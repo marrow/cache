@@ -1,25 +1,91 @@
 # encoding: utf-8
 
+# # Imports
+
 from __future__ import unicode_literals
 
 from mongoengine import Document, EmbeddedDocument
 from mongoengine import StringField, DateTimeField, GenericReferenceField, DynamicField, EmbeddedDocumentField
 
 from .exc import CacheMiss
-from .compat import py3, iteritems
-from .util import sha256, timedelta, resolve, wraps, proxy, utcnow, chain, isclass, deque, contextmanager, stack
+from .compat import py3, unicode, iteritems
+from .util import sha256, timedelta, resolve, wraps, ref, utcnow, chain, isclass, deque, contextmanager, stack, pformat, fetch
 
+
+# # Implementation
+
+# ## Utility Classes
 
 class CacheKey(EmbeddedDocument):
+	"""The unique key cached values are indexed on."""
+	
 	prefix = StringField(db_field='p', default=None)
 	reference = GenericReferenceField(db_field='r', default=None)
 	hash = StringField(db_field='h')
 	
 	def __repr__(self):
 		return "CacheKey({0.prefix}, {0.reference}, {0.hash})".format(self)
+	
+	@classmethod
+	def new(cls, prefix, reference, args, kw):
+		hash = sha256()
+		hash.update(unicode(pformat(args)).encode('utf8'))
+		hash.update(unicode(pformat(kw)).encode('utf8'))
+		
+		result = cls(prefix=prefix, reference=reference, hash=hash.hexdigest())
+		return result
 
+
+class CacheMark(object):
+	def __init__(self, manager, expiry, prefix=None, reference=False, refresh=False, populate=True, processor=None):
+		self.manager = manager
+		self.expiry = expiry
+		self.prefix = prefix
+		self.reference = reference
+		self.refresh = refresh
+		self.populate = populate
+		self.processor = processor
+		
+		super(CacheMark, self).__init__()
+	
+	def __call__(self, fn):
+		@wraps(fn)
+		def cache_mark_inner(*args, **kw):
+			prefix = self.prefix
+			if not prefix:
+				prefix = resolve(fn)
+			
+			reference = self.reference
+			if reference and args and isinstance(args[0], Document):
+				veto = getattr(args[0], '__nocache__', False)
+				
+				if not args[0].pk or args[0]._created or (veto and veto[-1]):
+					return fn(*args, **kw)  # Can't safely cache.
+				
+				reference = args[0] if reference is True else reference
+				
+			
+			_args = self.processor(args, kw) if self.processor else (args, kw)
+			key = CacheKey.new(prefix, None if reference is True or reference is False else reference, *_args)
+			
+			try:
+				return self.manager.get(key, refresh=self.expiry if self.refresh else None)
+			except CacheMiss:
+				if not self.populate:
+					raise
+				
+			return self.manager.set(key, fn(*args, **kw), self.expiry()).value
+		
+		cache_mark_inner.__func__ = fn
+		
+		return cache_mark_inner
+
+
+# ## Primary Class
 
 class Cache(Document):
+	"""A cached value."""
+	
 	meta = dict(
 			collection = "cache",
 			allow_inheritance = False,
@@ -38,6 +104,11 @@ class Cache(Document):
 	value = DynamicField(db_field='v')
 	expires = DateTimeField(db_field='e', default=lambda: utcnow() + timedelta(weeks=1))
 	
+	# ### Magic Methods
+	
+	def __repr__(self):
+		return 'Cache({1.prefix}, {1.reference}, {1.hash}, {0.expires})'.format(self, self.key if self.key else CacheKey())
+	
 	# ### Basic Accessors
 	
 	@classmethod
@@ -47,7 +118,7 @@ class Cache(Document):
 		# TODO: Upserts, baby!  Benchmark first, of course.
 		# TODO: deque enable/disable context manager glue
 		
-		result = model.objects(pk=criteria).scalar('expires', 'value').first()
+		result = cls.objects(pk=criteria).scalar('expires', 'value').first()
 		
 		if not result:
 			raise CacheMiss()
@@ -66,74 +137,49 @@ class Cache(Document):
 		""""""
 		
 		# TODO: Pipe out to SON and back to ensure consistent return types.
-		
 		return cls(pk=criteria, value=value, expires=expires).save(force_insert=True, write_concern={'w': 0})
 	
 	# ### Decorators
 	
 	@classmethod
-	def memoize(cls, prefix=None, reference=None, expires=utcnow, weeks=0, days=0, hours=0, minutes=0, seconds=0, refresh=False, populate=True):
-		""""""
-		
-		def generate_expiry():
+	def generate_expiry(cls, expires, weeks, days, hours, minutes, seconds):
+		def generate_expiry_inner():
 			if weeks or days or hours or minutes or seconds:
 				return expires() + timedelta(weeks=weeks, days=days, hours=hours, minutes=minutes, seconds=seconds)
 			
 			return (expires() + cls.DEFAULT_DELTA) if cls.DEFAULT_DELTA else expires()
 		
-		if prefix is None:
-			prefix = resolve(fn)
-		
-		def decorator(fn):
-			@wraps(fn)
-			def inner(*args, **kw):
-				key = CacheKey(prefix, reference, cls.keyfunc(args, kw))
-				
-				try:
-					return cls.get(key, refresh=generate_expiry if refresh else None)
-				except CacheMiss:
-					if not populate:
-						raise
-				
-				return cls.set(key, fn(*args, **kw), generate_expiry()).value
-			
-			# TODO: inner.cache QuerySet descriptor
-			inner.wraps = proxy(fn)  # Don't want circular references, now.
-			
-			return inner
-		
-		return decorator
+		return generate_expiry_inner
 	
 	@classmethod
-	def method(cls, *attributes, **innerkwargs):
+	def memoize(cls, prefix=None, reference=None, expires=utcnow, weeks=0, days=0, hours=0, minutes=0, seconds=0, refresh=False, populate=True):
 		""""""
 		
-		def decorator(fn):
-			prefix = innerkwargs.pop('prefix', None)
-			if not prefix: prefix = resolve(fn)
-			
-			@wraps(fn)
-			def inner(self, *args, **kw):
-				if 'reference' not in innerkwargs and isinstance(self, Document):
-					veto = getattr(self, '__nocache__', False)
-					
-					if not self.pk or self._created or (veto and veto[-1]):
-						return fn(self, *args, **kw)  # Can't safely cache.
-					
-					innerkwargs['reference'] = self.pk
-				
-				# This combines the fields we pull and the reference default by nesting a call to memoize.
-				@cls.memoize(prefix, **innerkwargs)  # Dogfood, yum!
-				def xyzzy(*magic):
-					return fn(self, *args, **kw)
-				
-				# This is excessively ugly, but works.
-				# It prefixes the expected arglist with the dependent values.
-				return xyzzy(*chain((fetch(self, i) for i in attributes), args))
-			
-			return inner
+		return CacheMark(
+				cls,
+				cls.generate_expiry(expires, weeks, days, hours, minutes, seconds),
+				prefix,
+				False if reference is None else reference,
+				refresh,
+				populate
+			)
+	
+	@classmethod
+	def method(cls, *attributes, **kw):
+		""""""
+		def method_args_callback(args, kw):
+			return (tuple(fetch(args[0], i) for i in attributes) + args[1:]), kw
 		
-		return decorator
+		return CacheMark(
+				cls,
+				cls.generate_expiry(kw.pop('expires', utcnow),
+					**dict((i, kw.get(i, 0)) for i in ('weeks', 'days', 'hours', 'minutes', 'seconds'))),
+				kw.get('prefix', None),
+				kw.get('reference', True),
+				kw.get('refresh', False),
+				kw.get('populate', True),
+				method_args_callback
+			)
 	
 	# ### Context Managers
 	
@@ -148,12 +194,3 @@ class Cache(Document):
 	def enable(target=None):
 		with stack(Document if target is None else target, '__nocache__', False):
 			yield
-	
-	# ### Utility Methods
-	
-	@staticmethod
-	def keyfunc(args, kw):
-		key = sha256()
-		key.update(pformat(args))
-		key.update(pformat(kw))
-		return key.hexdigest()

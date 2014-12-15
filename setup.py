@@ -8,22 +8,6 @@ import sys
 import codecs
 
 
-# This is an extreme test for use of __qualname__ and im_class.
-
-class Mine(object):
-	def canary(self):
-		pass
-
-if not hasattr(Mine.canary, 'im_class') and not hasattr(Mine.canary, '__qualname__'):
-	os.environ['CANARY'] = "DEAD"
-	print("*" * 79, file=sys.stderr)
-	print(" WARNING: You are executing marrow.schema under a Python version that supports", file=sys.stderr)
-	print(" neither im_class nor __qualname__ on class methods.  You will be unable to", file=sys.stderr)
-	print(" use automatic prefix detection on these.", file=sys.stderr)
-	print(" See: https://github.com/marrow/schema/#21-requirements")
-	print("*" * 79, file=sys.stderr)
-
-
 try:
 	from setuptools.core import setup, find_packages
 except ImportError:
@@ -54,7 +38,7 @@ class PyTest(TestCommand):
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-tests_require = ['pytest', 'pytest-cov']
+tests_require = ['pytest', 'pytest-cov', 'pytest-flakes', 'pytest-cagoule', 'pytest-spec<=0.2.22']
 
 setup(
 	name = "marrow.cache",
@@ -92,13 +76,17 @@ setup(
 	include_package_data = True,
 	namespace_packages = ['marrow'],
 	
-	install_requires = [],
+	install_requires = ['mongoengine>=0.8.5', 'marrow.package<2.0'],
 	
 	extras_require = dict(
 			development = tests_require,
 		),
 	
 	tests_require = tests_require,
+	
+	dependency_links = [
+			'git+https://github.com/illico/pytest-spec.git@feature/py26#egg=pytest-spec-0.2.22'
+		],
 	
 	zip_safe = False,
 	cmdclass = dict(

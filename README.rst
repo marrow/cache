@@ -140,7 +140,7 @@ In our example, a call such as ``print(multiply(2, 4))`` will generate a MongoDB
 
 If attempting to cache the result of an unreachable function (i.e. most closures) you must supply a prefix.
 
-The original decorated function is available (to bypass caching) using the ``wraps`` attribute.
+The original decorated function is available (to bypass caching) using the ``__func__`` attribute.
 
 3.1. Cache Control
 ------------------
@@ -176,16 +176,6 @@ If the first argument (``self``, etc.) is a saved Document instance, ``pk`` will
 dependant attribute list.
 
 
-5. Testing
-==========
-
-A helper class is provided to aid in testing your caches.  It provides methods to easily (though not nessicarily
-efficiently) manipulate the cache in ways useful for testing.  This class is used extensively by Marrow Cache itself
-and is agnostic to your preferred test runner.
-
-This utility class (``marrow.cache.testing:CacheTest``) has been tested under Nose and py.test.
-
-
 5. Version History
 ==================
 
@@ -193,7 +183,6 @@ Version 1.0
 -----------
 
 * **Initial release.**  Extract from `Illico Hodes <http://www.illicohodes.com/>`_ RITA project.
-
 
 
 6. License
@@ -221,27 +210,27 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 
 .. |masterstatus| image:: http://img.shields.io/travis/marrow/cache/master.svg?style=flat
-    :target: https://travis-ci.org/marrow/marrow.schema
+    :target: https://travis-ci.org/marrow/cache
     :alt: Release Build Status
 
 .. |developstatus| image:: http://img.shields.io/travis/marrow/cache/develop.svg?style=flat
-    :target: https://travis-ci.org/marrow/marrow.schema
+    :target: https://travis-ci.org/marrow/cache
     :alt: Development Build Status
 
 .. |latestversion| image:: http://img.shields.io/pypi/v/marrow.cache.svg?style=flat
-    :target: https://pypi.python.org/pypi/marrow.schema
+    :target: https://pypi.python.org/pypi/cache
     :alt: Latest Version
 
 .. |downloads| image:: http://img.shields.io/pypi/dw/marrow.cache.svg?style=flat
-    :target: https://pypi.python.org/pypi/marrow.schema
+    :target: https://pypi.python.org/pypi/cache
     :alt: Downloads per Week
 
 .. |mastercover| image:: http://img.shields.io/coveralls/marrow/cache/master.svg?style=flat
-    :target: https://travis-ci.org/marrow/marrow.schema
+    :target: https://travis-ci.org/marrow/cache
     :alt: Release Test Coverage
 
 .. |developcover| image:: http://img.shields.io/coveralls/marrow/cache/develop.svg?style=flat
-    :target: https://travis-ci.org/marrow/marrow.schema
+    :target: https://travis-ci.org/marrow/cache
     :alt: Development Test Coverage
 
 .. |issuecount| image:: http://img.shields.io/github/issues/marrow/cache.svg?style=flat
