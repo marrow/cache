@@ -196,7 +196,7 @@ class Example(object):
 	
 	@Cache.method('sample.somevalue', prefix='Example.sample_somevalue')
 	def sample_somevalue(self):
-		return self.sample['somevalue'] * 4
+		return self.example['somevalue'] * 4
 
 
 class TestCacheMethod(TestCase):
@@ -233,7 +233,7 @@ class TestCacheMethod(TestCase):
 	def test_recursive_dependence(self):
 		instance = Example()
 		assert instance.sample_somevalue() == 108
-		assert Cache.objects.count() == 2
+		assert Cache.objects.count() == 2, Cache.objects()
 		
 		instance.example = dict(somevalue=42)
 		assert instance.sample_somevalue() == 108
