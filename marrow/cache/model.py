@@ -32,13 +32,10 @@ class CacheKey(EmbeddedDocument):
 	@classmethod
 	def new(cls, prefix, reference, args, kw):
 		hash = sha256()
-		print("hashing", unicode(pformat(args)).encode('utf8'))
-		print("hashing", unicode(pformat(kw)).encode('utf8'))
 		hash.update(unicode(pformat(args)).encode('utf8'))
 		hash.update(unicode(pformat(kw)).encode('utf8'))
 		
 		result = cls(prefix=prefix, reference=reference, hash=hash.hexdigest())
-		print("> result", result)
 		return result
 
 
@@ -57,26 +54,20 @@ class CacheMark(object):
 	def __call__(self, fn):
 		@wraps(fn)
 		def cache_mark_inner(*args, **kw):
-			print(self.__dict__, self.expiry())
-			
 			prefix = self.prefix
 			if not prefix:
 				prefix = resolve(fn)
-				print('calculated prefix:', prefix)
 			
 			reference = self.reference
 			if reference and args and isinstance(args[0], Document):
-				print("ref", reference, args[0])
 				veto = getattr(args[0], '__nocache__', False)
 				
 				if not args[0].pk or args[0]._created or (veto and veto[-1]):
-					print("VETO")
 					return fn(*args, **kw)  # Can't safely cache.
 				
 				reference = self.pk if reference is True else reference
 			
 			_args = self.processor(args, kw) if self.processor else (args, kw)
-			print("<<<", _args, self.processor)
 			key = CacheKey.new(prefix, None if reference is True or reference is False else reference, *_args)
 			
 			try:
@@ -179,10 +170,6 @@ class Cache(Document):
 	def method(cls, *attributes, **kw):
 		""""""
 		def method_args_callback(args, kw):
-			print("fetching on", attributes)
-			for i in attributes:
-				print("calc", i, args[0], fetch(args[0], i))
-			print("returning", (tuple(fetch(args[0], i) for i in attributes) + args[1:]), kw)
 			return (tuple(fetch(args[0], i) for i in attributes) + args[1:]), kw
 		
 		return CacheMark(
