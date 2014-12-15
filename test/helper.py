@@ -33,7 +33,7 @@ class Example(object):
 instance = Example()
 
 
-if __name__ == '__main__':
+def main():
 	# We run some tests and output the results.
 	
 	import re
@@ -86,3 +86,6 @@ if __name__ == '__main__':
 			for name, value in getmembers(src, callback):
 				if name == '__globals__': continue
 				print(sname, function, name, addrstrip.sub('', repr(value)), sep='\t')
+
+if __name__ == '__main__':
+	main()

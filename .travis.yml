@@ -22,7 +22,7 @@ notifications:
     on_success: change
     on_failure: always
     template:
-      - "%{repository_slug}:%{branch}@%{commit} ${message}"
+      - "%{repository_slug}:%{branch}@%{commit} %{message}"
       - "Duration: %{duration} - Details: %{build_url}"
 
 after_success:
