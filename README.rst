@@ -179,6 +179,11 @@ Version 1.0
 
 * **Initial release.**  Extract from `Illico Hodes <http://www.illicohodes.com/>`_ RITA project.
 
+Version 1.0.1
+-------------
+
+* **Timezone issue correction.**  Now correctly handles when timezone-awareness is enabled in MongoEngine/pymongo.
+
 
 6. License
 ==========
