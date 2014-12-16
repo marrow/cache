@@ -123,7 +123,7 @@ class Cache(Document):
 		if not result:
 			raise CacheMiss()
 		
-		if result[0] <= utcnow():
+		if result[0].replace(tzinfo=None) < utcnow():
 			cls.objects(pk=criteria).delete()
 			raise CacheMiss()
 		
