@@ -4,6 +4,8 @@
 
 from __future__ import unicode_literals
 
+from wrapt import decorator
+from inspect import isclass
 from mongoengine import Document, EmbeddedDocument
 from mongoengine import StringField, DateTimeField, GenericReferenceField, DynamicField, EmbeddedDocumentField
 
@@ -37,6 +39,12 @@ class CacheKey(EmbeddedDocument):
 
 
 class CacheMark(object):
+	"""The bulk of the caching machinery is contained within this decorator class.
+	
+	This provides a single location for all of the settings and callbacks associated with a function or method whose
+	result you wish cached.  Instances are constructed using the ``@Cache.memoize`` and ``@Cache.method`` decorators.
+	"""
+	
 	def __init__(self, manager, expiry, prefix=None, reference=False, refresh=False, populate=True, processor=None):
 		self.manager = manager
 		self.expiry = expiry
@@ -48,37 +56,29 @@ class CacheMark(object):
 		
 		super(CacheMark, self).__init__()
 	
-	def __call__(self, fn):
-		@wraps(fn)
-		def cache_mark_inner(*args, **kw):
-			prefix = self.prefix
-			if not prefix:
-				prefix = resolve(fn)
-			
-			reference = self.reference
-			if reference and args and isinstance(args[0], Document):
-				veto = getattr(args[0], '__nocache__', False)
-				
-				if not args[0].pk or args[0]._created or (veto and veto[-1]):
-					return fn(*args, **kw)  # Can't safely cache.
-				
-				reference = args[0] if reference is True else reference
-				
-			
-			_args = self.processor(args, kw) if self.processor else (args, kw)
-			key = CacheKey.new(prefix, None if reference is True or reference is False else reference, *_args)
-			
-			try:
-				return self.manager.get(key, refresh=self.expiry if self.refresh else None)
-			except CacheMiss:
-				if not self.populate:
-					raise
-				
-			return self.manager.set(key, fn(*args, **kw), self.expiry()).value
+	@decorator
+	def __call__(self, wrapped, instance, args, kw):
+		prefix = self.prefix if self.prefix else resolve(wrapped)
 		
-		cache_mark_inner.__func__ = fn
+		reference = self.reference
+		if reference and isinstance(instance, Document):
+			veto = getattr(instance, '__nocache__', False)
+			
+			if not instance.pk or instance._created or (veto and veto[-1]):
+				return wrapped(*args, **kw)  # Can't safely cache.
+			
+			reference = instance if reference is True else reference
 		
-		return cache_mark_inner
+		_args = self.processor(instance, args, kw) if self.processor else (args, kw)
+		key = CacheKey.new(prefix, None if reference in (True, False) else reference, *_args)
+		
+		try:
+			return self.manager.get(key, refresh=self.expiry if self.refresh else None)
+		except CacheMiss:
+			if not self.populate:
+				raise
+		
+		return self.manager.set(key, wrapped(*args, **kw), self.expiry()).value
 
 
 # ## Primary Class
@@ -167,8 +167,9 @@ class Cache(Document):
 	@classmethod
 	def method(cls, *attributes, **kw):
 		""""""
-		def method_args_callback(args, kw):
-			return (tuple(fetch(args[0], i) for i in attributes) + args[1:]), kw
+		
+		def method_args_callback(instance, args, kw):
+			return (tuple(fetch(instance, i) for i in attributes) + args[1:]), kw
 		
 		return CacheMark(
 				cls,

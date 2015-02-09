@@ -133,7 +133,6 @@ class TestCacheGeneral(TestCase):
 
 
 class TestCacheMemoize(TestCase):
-	@pytest.mark.xfail(not hasattr(bare, '__qualname__'), reason="Requires __qualname__ support in Python 3.3+")
 	def test_automatic_prefixes(self):
 		assert Cache.objects.count() == 0
 		
