@@ -253,6 +253,20 @@ class ExampleDocument(Document):
 		return "Hello " + self.name + "!"
 
 
+class TestDocuments(TestCase):
+	def test_different_docuemnt_same_method(self):
+		Cache.objects.delete()
+		ExampleDocument.objects.delete()
+		
+		instance1 = ExampleDocument(name="Al Gore").save()
+		instance2 = ExampleDocument(name="Bob Dole").save()
+		
+		assert instance1.hello() == "Hello Al Gore!"
+		assert instance2.hello() == "Hello Bob Dole!"
+		
+		assert Cache.objects.count() == 2
+
+
 class TestDocumentMethodCache(TestCase):
 	def test_cache_veto_simple(self):
 		Cache.objects.delete()
