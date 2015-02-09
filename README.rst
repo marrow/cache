@@ -184,6 +184,11 @@ Version 1.0.1
 
 * **Timezone issue correction.**  Now correctly handles when timezone-awareness is enabled in MongoEngine/pymongo.
 
+Version 1.0.2
+-------------
+
+* **Automatic prefix naming.** Automatic prefixes are now available on Python versions < 3.3.
+
 
 6. License
 ==========
