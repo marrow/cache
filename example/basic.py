@@ -46,7 +46,7 @@ def fibonacci(n):
 	return fibonacci(n-1) + fibonacci(n-2)
 
 
-fib_refresh = Cache.memoize(minutes=5, refresh=True)(fibonacci.wraps())
+fib_refresh = Cache.memoize(minutes=5, refresh=True)(fibonacci.__wrapped__)
 
 
 if __name__ == '__main__':
@@ -61,7 +61,7 @@ if __name__ == '__main__':
 	
 	# First, the unoptimized approach.
 	print("Cache Bypass: ", end=''); flush()
-	timeit(('-s', 'from __main__ import fibonacci', 'fibonacci.wraps()(50)'))
+	timeit(('-s', 'from __main__ import fibonacci', 'fibonacci.__wrapped__(50)'))
 	
 	# Now, what happens when we use the cache?
 	print("Cached: ", end=''); flush()
@@ -71,7 +71,7 @@ if __name__ == '__main__':
 	print("Cached w/ Refresh: ", end=''); flush()
 	timeit(('-s', 'from __main__ import fib_refresh', 'fib_refresh(50)'))
 	
-	print("The 50th fibonacci number is:", fibonacci(50), "or", fibonacci.wraps()(50))
+	print("The 50th fibonacci number is:", fibonacci(50), "or", fibonacci.__wrapped__(50))
 	
 	# Emit some interesting statistics:
 	print("Total cached objects:", Cache.objects.count())
