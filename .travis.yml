@@ -11,6 +11,10 @@ env:
 
 install: travis_retry .travis/install.sh
 
+before_script:
+  - echo "Sleeping to let MongoDB start up."
+  - sleep 15
+
 script: .travis/run.sh
 
 notifications:
@@ -28,4 +32,5 @@ notifications:
 after_success:
   - coveralls
 
-services: mongodb
+services:
+  - mongodb
