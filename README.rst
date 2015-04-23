@@ -10,7 +10,7 @@ Marrow Cache
 
 ..
 
-    |latestversion| |downloads| |masterstatus| |mastercover| |issuecount|
+    |latestversion| |downloads| |masterstatus| |mastercover| |masterrequires| |climate| |issuecount|
 
 1. What is Marrow Cache?
 ========================
@@ -56,7 +56,7 @@ in the background.
 2.1. Development Version
 ------------------------
 
-    |developstatus| |developcover|
+    |developstatus| |developcover| |developrequires|
 
 Development takes place on `GitHub <https://github.com/>`_ in the
 `marrow.cache <https://github.com/marrow/cache/>`_ project.  Issue tracking, documentation, and downloads
@@ -222,12 +222,20 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     :target: https://travis-ci.org/marrow/cache
     :alt: Development Build Status
 
+.. |masterrequires| image:: https://requires.io/github/marrow/cache/requirements.svg?branch=master
+    :target: https://requires.io/github/marrow/cache/requirements/?branch=master
+    :alt: Package Requirements
+
+.. |developrequires| image:: https://requires.io/github/marrow/cache/requirements.svg?branch=develop
+    :target: https://requires.io/github/marrow/cache/requirements/?branch=develop
+    :alt: Package Requirements
+
 .. |latestversion| image:: http://img.shields.io/pypi/v/marrow.cache.svg?style=flat
-    :target: https://pypi.python.org/pypi/cache
+    :target: https://pypi.python.org/pypi/marrow.cache
     :alt: Latest Version
 
 .. |downloads| image:: http://img.shields.io/pypi/dw/marrow.cache.svg?style=flat
-    :target: https://pypi.python.org/pypi/cache
+    :target: https://pypi.python.org/pypi/marrow.cache
     :alt: Downloads per Week
 
 .. |mastercover| image:: http://img.shields.io/coveralls/marrow/cache/master.svg?style=flat
@@ -241,5 +249,9 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 .. |issuecount| image:: http://img.shields.io/github/issues/marrow/cache.svg?style=flat
     :target: https://github.com/marrow/cache/issues
     :alt: Github Issues
+
+.. |climate| image:: https://codeclimate.com/github/marrow/cache/badges/gpa.svg
+    :target: https://codeclimate.com/github/marrow/cache
+    :alt: Code Climate
 
 .. |cake| image:: http://img.shields.io/badge/cake-lie-1b87fb.svg?style=flat
