@@ -231,11 +231,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     :alt: Package Requirements
 
 .. |latestversion| image:: http://img.shields.io/pypi/v/marrow.cache.svg?style=flat
-    :target: https://pypi.python.org/pypi/cache
+    :target: https://pypi.python.org/pypi/marrow.cache
     :alt: Latest Version
 
 .. |downloads| image:: http://img.shields.io/pypi/dw/marrow.cache.svg?style=flat
-    :target: https://pypi.python.org/pypi/cache
+    :target: https://pypi.python.org/pypi/marrow.cache
     :alt: Downloads per Week
 
 .. |mastercover| image:: http://img.shields.io/coveralls/marrow/cache/master.svg?style=flat
