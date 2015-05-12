@@ -124,7 +124,7 @@ class Cache(Document):
 			raise CacheMiss()
 		
 		if result[0].replace(tzinfo=None) < utcnow():
-			cls.objects(pk=criteria).delete()
+			cls.objects(pk=criteria).delete(write_concern={'w': 0})
 			raise CacheMiss()
 		
 		if refresh:
